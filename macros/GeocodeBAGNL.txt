@@ -1,0 +1,26 @@
+Function GeocodeBAGNL(sSearch as String) as String
+       If Len(sSearch) = 0 Then Exit Function
+       URL = "http://geodata.nationaalgeoregister.nl/geocoder/Geocoder?zoekterm="
+       URL = URL & sSearch
+       oSimpleFileAccess = createUnoService( "com.sun.star.ucb.SimpleFileAccess" )
+       On Error GoTo ErrorResponse
+       oInputStream = oSimpleFileAccess.openFileRead(URL)
+       oTextStream = createUnoService("com.sun.star.io.TextInputStream")
+       oTextStream.InputStream = oInputStream
+       aDelimiters = Array(ASC(">"),ASC("<"))
+       sLastString = ""
+       pos = "No match found for " & sSearch
+       Do While NOT oTextStream.isEOF
+          sThisString = oTextStream.readString(aDelimiters,True)
+          Select Case sThisString
+             Case "/gml:pos":
+                pos = sLastString
+          End Select
+          sLastString = sThisString
+       Loop
+       GeocodeBAGNL = pos 
+       oInputStream.closeInput()
+       Exit Function
+       ErrorResponse:
+       GeocodeBAGNL = "no match found for " & sSearch
+End Function

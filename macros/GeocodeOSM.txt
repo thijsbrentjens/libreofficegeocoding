@@ -1,0 +1,28 @@
+Function GeocodeOSM(sSearch as String) as String
+       If Len(sSearch) = 0 Then Exit Function
+       URL = "http://nominatim.openstreetmap.org/search?format=xml&q="
+       URL = URL & sSearch
+       oSimpleFileAccess = createUnoService( "com.sun.star.ucb.SimpleFileAccess" )
+       On Error GoTo ErrorResponse
+       oInputStream = oSimpleFileAccess.openFileRead(URL)
+       oTextStream = createUnoService("com.sun.star.io.TextInputStream")
+       oTextStream.InputStream = oInputStream
+       aDelimiters = Array(ASC(">"),ASC("<"),ASC(" "),ASC("="))
+       sLastString = ""
+       sLon="No match found for " & sSearch
+       Do While NOT oTextStream.isEOF
+          sThisString = oTextStream.readString(aDelimiters,True)
+          Select Case sLastString
+             Case "lat":
+                sLat = sThisString
+              Case "lon":
+                sLon = sThisString
+          End Select
+          sLastString = sThisString
+       Loop
+       GeocodeOSM = sLon & " " &sLat 
+       oInputStream.closeInput()
+       Exit Function
+       ErrorResponse:
+       GeocodeOSM = "no values found"
+End Function
